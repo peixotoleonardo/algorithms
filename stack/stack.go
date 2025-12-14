@@ -1,72 +1,86 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 )
 
 // É uma coleção de elementos que são inseridos
 // e removidos seguindo a premissa de que o
 // último a entrar é o primeiro a sair (LIFO).
-type Stack struct {
-	size  int
-	top   int
-	items []int
+type Stack[T any] struct {
+	items []T
+}
+
+func NewStack[T any](capacity int) *Stack[T] {
+	return &Stack[T]{items: make([]T, 0, capacity)}
 }
 
 // Adiciona i no topo da pilha
-func (s *Stack) Push(i int) {
+func (s *Stack[T]) Push(i T) *Stack[T] {
 	s.items = append(s.items, i)
-	s.size = len(s.items)
-	s.top = s.size - 1
+
+	return s
 }
 
 // Remove e retorna o elemento do topo da
 // pilha
-func (s *Stack) Pop() int {
-	top := s.items[s.top]
+func (s *Stack[T]) Pop() (T, bool) {
+	var zero T
 
-	s.size -= 1
-	s.top -= 1
+	if len(s.items) == 0 {
+		return zero, false
+	}
 
-	s.items = s.items[:s.size]
+	last := len(s.items) - 1
 
-	return top
+	v := s.items[last]
+
+	s.items[last] = zero
+
+	s.items = s.items[:last]
+
+	return v, true
 }
 
 // Retorna o tamanho da pilha
-func (s Stack) Size() int {
-	return s.size
+func (s Stack[T]) Size() int {
+	return len(s.items)
 }
 
-func (s Stack) String() string {
+func (s Stack[T]) String() string {
 	var str strings.Builder
 
-	if s.size == 0 {
+	if len(s.items) == 0 {
 		return "| pilha vazia |\n"
 	}
 
-	for i := s.top; i >= 0; i-- {
-		if i == s.top {
-			fmt.Fprintf(&str, "| %2d | <- topo\n", s.items[i])
-		} else {
-			fmt.Fprintf(&str, "| %2d |\n", s.items[i])
-		}
+	for i := len(s.items) - 1; i >= 0; i-- {
+		fmt.Fprintf(&str, "| %2v |\n", s.items[i])
 	}
 
 	return str.String()
 }
 
 func main() {
-	var s Stack
+	s := NewStack[int](100)
 
-	for i := range 100 {
+	for i := range 10 {
 		s.Push(i)
-		fmt.Println(s)
 	}
 
-	for s.Size() > 0 {
-		s.Pop()
-		fmt.Println(s)
+	b := bufio.NewReader(os.Stdin)
+
+	for {
+
+		if _, ok := s.Pop(); ok {
+			fmt.Println(s)
+		} else {
+			break
+		}
+
+		b.ReadString('\n')
 	}
 }
